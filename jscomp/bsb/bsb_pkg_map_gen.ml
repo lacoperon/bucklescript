@@ -25,8 +25,22 @@
 let (//) = Ext_filename.combine
 
 
-let output ~cwd namespace file_groups = 
+let output ~cwd namespace 
+    (file_groups : Bsb_parse_sources.file_group list)
+  = 
   (* FIXME : *)
-  let _oc = open_out_bin (cwd // Bsb_config.lib_bs) in 
+  let fname = namespace ^ ".ml" in 
+  let oc = open_out_bin 
+      (cwd // Bsb_config.lib_bs// fname ) in 
+  let modules =     
+    List.fold_left 
+    (fun acc (x : Bsb_parse_sources.file_group) ->
+        x.resources @acc 
+     ) [] file_groups in 
+  let structures = 
+    Bsb_pkg_create.make_structure namespace modules in 
 
-  assert false 
+  Ml_binary.write_ast Ml_binary.Ml fname
+    structures 
+    oc ;
+  close_out oc 

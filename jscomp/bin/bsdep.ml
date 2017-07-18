@@ -29,6 +29,8 @@ val version : string
 val header : string 
 
 val package_name : string
+
+
 end = struct
 #1 "bs_version.ml"
 

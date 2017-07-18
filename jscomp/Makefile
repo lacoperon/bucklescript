@@ -304,6 +304,7 @@ BSB_SRCS= bsb_config \
 	bsb_log\
 	bsb_pkg \
 	bsb_pkg_create\
+	bsb_pkg_map_gen\
 	bsb_build_schemas \
 	bsb_build_util \
 	bsb_helper_linker\

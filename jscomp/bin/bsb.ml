@@ -16962,7 +16962,7 @@ let output ~cwd namespace
   let modules =     
     List.fold_left 
     (fun acc (x : Bsb_parse_sources.file_group) ->
-        x.resources @acc 
+        String_map.keys x.sources @acc 
      ) [] file_groups in 
   let structures = 
     Bsb_pkg_create.make_structure namespace modules in 

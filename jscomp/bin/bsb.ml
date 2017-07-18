@@ -77,7 +77,7 @@ let cut_generators = "cut-generators"
 let generators = "generators"
 let command = "command"
 let edge = "edge"
-
+let namespace = "namespace"
 end
 module Ext_pervasives : sig 
 #1 "ext_pervasives.mli"
@@ -545,6 +545,10 @@ val is_valid_source_name :
    ]}
 *)
 val is_valid_npm_package_name : string -> bool 
+
+val module_name_of_package_name : string -> string
+
+
 val no_char : string -> char -> int -> int -> bool 
 
 
@@ -934,6 +938,32 @@ let is_valid_npm_package_name (s : string) =
          |  'a'..'z' | '0'..'9' | '_' | '-' -> true
          | _ -> false )
   | _ -> false 
+
+let module_name_of_package_name (s : string) : string = 
+  let len = String.length s in 
+  let buf = Buffer.create len in 
+  let add capital ch = 
+    Buffer.add_char buf 
+      (if capital then 
+        (Char.uppercase ch)
+      else ch) in    
+  let rec aux capital off len =     
+      if off >= len then ()
+      else 
+        let ch = String.unsafe_get s off in
+        match ch with 
+        | 'a' .. 'z' 
+        | 'A' .. 'Z' 
+        | '0' .. '9'
+          ->
+          add capital ch ; 
+          aux false (off + 1) len 
+        | '-' -> 
+          aux true (off + 1) len 
+        | _ -> aux capital (off+1) len
+         in 
+   aux true 0 len ;
+   Buffer.contents buf 
 
 type check_result = 
   | Good 
@@ -4740,6 +4770,8 @@ let resolve_bs_package ~cwd package =
           "@{<warning>Duplicated package:@} %s %s (chosen) vs %s in %s @." package x result cwd;
       end;
     x
+
+
 
 (** The package does not need to be a bspackage 
   example:
@@ -10007,6 +10039,7 @@ type t =
   {
     package_name : string ; 
     ocamllex : string ; 
+    namespace : string option;
     external_includes : string list ; 
     bsc_flags : string list ;
     ppx_flags : string list ;
@@ -10587,6 +10620,7 @@ let interpret_json
   let refmt = ref None in
   let refmt_flags = ref Bsb_default.refmt_flags in
   let package_name = ref None in 
+  let namespace = ref false in 
   let bs_external_includes = ref [] in 
   (** we should not resolve it too early,
       since it is external configuration, no {!Bsb_build_util.convert_and_resolve_path}
@@ -10648,10 +10682,14 @@ let interpret_json
       | Some x -> Bsb_exception.failf ~loc:(Ext_json.loc_of x) 
       "Unexpected input for jsx"
       end)
+
     |? (Bsb_build_schemas.generate_merlin, `Bool (fun b ->
         generate_merlin := b
       ))
     |? (Bsb_build_schemas.name, `Str (fun s -> package_name := Some s))
+    |? (Bsb_build_schemas.namespace, `Bool (fun b ->
+        namespace := b
+     ))
     |? (Bsb_build_schemas.package_specs, 
         `Arr (fun s -> package_specs := get_package_specs_from_array  s ))
     |? (Bsb_build_schemas.js_post_build, `Obj begin fun m ->
@@ -10725,15 +10763,19 @@ let interpret_json
             Unix.unlink config_json;
             Unix.rename output_file config_json
         end;
-
-        {
-          Bsb_config_types.package_name =
-            (match !package_name with
+        let package_name =       
+          (match !package_name with
              | Some name -> name
              | None ->
                failwith "Error: Package name is required. Please specify a `name` in `bsconfig.json`"
-            );
-
+            ) in 
+        let namespace =     
+          if !namespace then 
+            Some (Ext_string.module_name_of_package_name package_name)
+          else   None  in 
+        {
+          package_name ;
+          namespace;    
           ocamllex = !ocamllex ; 
           external_includes = !bs_external_includes;
           bsc_flags = !bsc_flags ;
@@ -11993,6 +12035,107 @@ let regenerate_ninja
 
 
 end
+module Bsb_query : sig 
+#1 "bsb_query.mli"
+(* Copyright (C) 2017 Authors of BuckleScript
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * In addition to the permissions granted to you by the LGPL, you may combine
+ * or link a "work that uses the Library" with a publicly distributed version
+ * of this file to produce a combined library or application, then distribute
+ * that combined work under the terms of your choosing, with no requirement
+ * to comply with the obligations normally placed on you by section 4 of the
+ * LGPL version 3 (or the corresponding section of a later version of the LGPL
+ * should you choose to use a later version).
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *)
+
+
+
+val query: cwd:string -> bsc_dir:string -> string -> unit  
+end = struct
+#1 "bsb_query.ml"
+(* Copyright (C) 2017 Authors of BuckleScript
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * In addition to the permissions granted to you by the LGPL, you may combine
+ * or link a "work that uses the Library" with a publicly distributed version
+ * of this file to produce a combined library or application, then distribute
+ * that combined work under the terms of your choosing, with no requirement
+ * to comply with the obligations normally placed on you by section 4 of the
+ * LGPL version 3 (or the corresponding section of a later version of the LGPL
+ * should you choose to use a later version).
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *)
+
+
+
+let query_sources ({bs_file_groups} : Bsb_config_types.t) : Ext_json_noloc.t 
+  = 
+  bs_file_groups 
+  |> Ext_array.of_list_map (fun (x : Bsb_parse_sources.file_group) -> 
+    Ext_json_noloc.(
+      kvs [
+        "dir", str x.dir ;
+        "sources" , 
+        (String_map.keys x.sources)
+        |> Ext_array.of_list_map str
+        |> arr 
+      ]
+    )
+  )
+  |> Ext_json_noloc.arr 
+
+
+let query_current_package_sources cwd bsc_dir = 
+    let config_opt  = Bsb_ninja_regen.regenerate_ninja 
+      ~no_dev:false
+      ~override_package_specs:None
+      ~generate_watch_metadata:true
+      ~forced:true  cwd bsc_dir in 
+    match config_opt with   
+    | None -> None
+     
+    | Some config ->
+      Some (query_sources config)
+
+
+let query ~cwd ~bsc_dir str = 
+  match str with 
+  | "sources" -> 
+    begin match query_current_package_sources cwd bsc_dir with 
+    | None -> raise (Arg.Bad "internal error in query")
+    | Some config -> 
+      output_string stdout 
+      (Printf.sprintf "QUERY-INFO-BEGIN(%s)\n" str);
+      Ext_json_noloc.to_channel stdout 
+      ( config );
+      output_string stdout "\nQUERY-INFO-END\n";
+    end
+  | _ -> raise (Arg.Bad "Unsupported query")
+end
 module Bsb_file : sig 
 #1 "bsb_file.mli"
 
@@ -12227,7 +12370,8 @@ end = struct
 
 
 let cwd = Sys.getcwd ()
-
+let bsc_dir = Bsb_build_util.get_bsc_dir cwd 
+let () =  Bsb_log.setup () 
 let (//) = Ext_filename.combine
 let force_regenerate = ref false
 let exec = ref false
@@ -12240,6 +12384,7 @@ let separator = "--"
 let watch_mode = ref false
 let make_world = ref false 
 let set_make_world () = make_world := true
+
 
 
 let bsb_main_flags : (string * Arg.spec * string) list=
@@ -12263,6 +12408,8 @@ let bsb_main_flags : (string * Arg.spec * string) list=
     " Init sample project to get started. Note (`bsb -init sample` will create a sample project while `bsb -init .` will resuse current directory)";
     "-theme", Arg.String set_theme,
     " The theme for project initialization, default is basic(https://github.com/bucklescript/bucklescript/tree/master/jscomp/bsb/templates)";
+    "-query", Arg.String (fun s -> Bsb_query.query ~cwd ~bsc_dir s ),
+    " (internal)Query metadata about the build";
     "-themes", Arg.Unit Bsb_init.list_themes,
     " List all available themes"
   ]
@@ -12333,8 +12480,7 @@ let watch_exit () =
 
 (* see discussion #929, if we catch the exception, we don't have stacktrace... *)
 let () =
-  let () =  Bsb_log.setup () in 
-  let bsc_dir = Bsb_build_util.get_bsc_dir cwd in
+  
   let vendor_ninja = bsc_dir // "ninja.exe" in  
   match Sys.argv with 
   | [| _ |] ->  (* specialize this path [bsb.exe] which is used in watcher *)

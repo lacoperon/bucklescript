@@ -1,8 +1,10 @@
 'use strict';
 
+var Char                    = require("../../lib/js/char.js");
 var List                    = require("../../lib/js/list.js");
 var Bytes                   = require("../../lib/js/bytes.js");
 var Curry                   = require("../../lib/js/curry.js");
+var Buffer                  = require("../../lib/js/buffer.js");
 var $$String                = require("../../lib/js/string.js");
 var Ext_bytes               = require("./ext_bytes.js");
 var Caml_int32              = require("../../lib/js/caml_int32.js");
@@ -561,6 +563,53 @@ function is_valid_npm_package_name(s) {
   }
 }
 
+function module_name_of_package_name(s) {
+  var len = s.length;
+  var buf = Buffer.create(len);
+  var add = function (capital, ch) {
+    return Buffer.add_char(buf, capital ? Char.uppercase(ch) : ch);
+  };
+  var aux = function (_capital, _off, len) {
+    while(true) {
+      var off = _off;
+      var capital = _capital;
+      if (off >= len) {
+        return /* () */0;
+      } else {
+        var ch = s.charCodeAt(off);
+        var exit = 0;
+        if (ch >= 58) {
+          exit = ch >= 91 ? (
+              ch > 122 || ch < 97 ? 1 : 2
+            ) : (
+              ch >= 65 ? 2 : 1
+            );
+        } else if (ch !== 45) {
+          exit = ch >= 48 ? 2 : 1;
+        } else {
+          _off = off + 1 | 0;
+          _capital = /* true */1;
+          continue ;
+          
+        }
+        switch (exit) {
+          case 1 : 
+              _off = off + 1 | 0;
+              continue ;
+              case 2 : 
+              add(capital, ch);
+              _off = off + 1 | 0;
+              _capital = /* false */0;
+              continue ;
+              
+        }
+      }
+    };
+  };
+  aux(/* true */1, 0, len);
+  return Buffer.contents(buf);
+}
+
 function is_valid_source_name(name) {
   var match = check_any_suffix_case_then_chop(name, /* :: */[
         ".ml",
@@ -805,6 +854,7 @@ exports.rindex_neg                      = rindex_neg;
 exports.rindex_opt                      = rindex_opt;
 exports.is_valid_module_file            = is_valid_module_file;
 exports.is_valid_npm_package_name       = is_valid_npm_package_name;
+exports.module_name_of_package_name     = module_name_of_package_name;
 exports.is_valid_source_name            = is_valid_source_name;
 exports.unsafe_no_char                  = unsafe_no_char;
 exports.unsafe_no_char_idx              = unsafe_no_char_idx;

@@ -23,6 +23,7 @@ bin/bsb.ml : bsb/bsb_clean.ml
 bin/bsb.ml : bsb/bsb_file.mli
 bin/bsb.ml : bsb/bsb_init.mli
 bin/bsb.ml : bsb/bsb_main.mli
+bin/bsb.ml : bsb/bsb_query.ml
 bin/bsb.ml : bsb/bsb_regex.ml
 bin/bsb.ml : bsb/bsb_rule.mli
 bin/bsb.ml : bsb/bsb_unix.mli
@@ -37,6 +38,7 @@ bin/bsb.ml : ext/literals.mli
 bin/bsb.ml : bsb/bsb_bsdeps.ml
 bin/bsb.ml : bsb/bsb_clean.mli
 bin/bsb.ml : bsb/bsb_config.ml
+bin/bsb.ml : bsb/bsb_query.mli
 bin/bsb.ml : bsb/bsb_regex.mli
 bin/bsb.ml : bsb/bsb_world.mli
 bin/bsb.ml : ext/ext_array.mli

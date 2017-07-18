@@ -121,6 +121,7 @@ let interpret_json
   let refmt = ref None in
   let refmt_flags = ref Bsb_default.refmt_flags in
   let package_name = ref None in 
+  let namespace = ref false in 
   let bs_external_includes = ref [] in 
   (** we should not resolve it too early,
       since it is external configuration, no {!Bsb_build_util.convert_and_resolve_path}
@@ -182,10 +183,14 @@ let interpret_json
       | Some x -> Bsb_exception.failf ~loc:(Ext_json.loc_of x) 
       "Unexpected input for jsx"
       end)
+
     |? (Bsb_build_schemas.generate_merlin, `Bool (fun b ->
         generate_merlin := b
       ))
     |? (Bsb_build_schemas.name, `Str (fun s -> package_name := Some s))
+    |? (Bsb_build_schemas.namespace, `Bool (fun b ->
+        namespace := b
+     ))
     |? (Bsb_build_schemas.package_specs, 
         `Arr (fun s -> package_specs := get_package_specs_from_array  s ))
     |? (Bsb_build_schemas.js_post_build, `Obj begin fun m ->
@@ -259,15 +264,19 @@ let interpret_json
             Unix.unlink config_json;
             Unix.rename output_file config_json
         end;
-
-        {
-          Bsb_config_types.package_name =
-            (match !package_name with
+        let package_name =       
+          (match !package_name with
              | Some name -> name
              | None ->
                failwith "Error: Package name is required. Please specify a `name` in `bsconfig.json`"
-            );
-
+            ) in 
+        let namespace =     
+          if !namespace then 
+            Some (Ext_string.module_name_of_package_name package_name)
+          else   None  in 
+        {
+          package_name ;
+          namespace;    
           ocamllex = !ocamllex ; 
           external_includes = !bs_external_includes;
           bsc_flags = !bsc_flags ;

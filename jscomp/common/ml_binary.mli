@@ -23,24 +23,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *)
 
 
-val read_ast : 'a Ml_binary.kind -> string -> 'a 
+
+type _ kind = 
+  | Ml : Parsetree.structure kind 
+  | Mli : Parsetree.signature kind
 
 
+val read_ast : 'a kind -> in_channel -> 'a 
 
-(**
-   Check out {!Depends_post_process} for set decoding
-   The [.ml] file can be recognized as an ast directly, the format
-   is
-   {
-   magic number;
-   filename;
-   ast
-   }
-   when [fname] is "-" it means the file is from an standard input or pipe.
-   An empty name would marshallized.
-
-   Use case cat - | fan -printer -impl -
-   redirect the standard input to fan
- *)
-val write_ast : fname:string -> output:string -> 'a Ml_binary.kind -> 'a -> unit
-
+val write_ast :
+   'a kind -> string -> 'a -> out_channel -> unit

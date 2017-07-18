@@ -173,6 +173,7 @@ bin/whole_compiler.ml : ../ocaml/typing/typedtree.ml
 bin/whole_compiler.ml : ../ocaml/typing/typetexp.mli
 bin/whole_compiler.ml : ../ocaml/utils/consistbl.mli
 bin/whole_compiler.ml : common/js_config.ml
+bin/whole_compiler.ml : common/ml_binary.ml
 bin/whole_compiler.ml : core/config_util.ml
 bin/whole_compiler.ml : core/js_analyzer.ml
 bin/whole_compiler.ml : core/js_ast_util.ml
@@ -214,6 +215,7 @@ bin/whole_compiler.ml : ../ocaml/typing/typeclass.mli
 bin/whole_compiler.ml : ../ocaml/typing/typedtree.mli
 bin/whole_compiler.ml : common/bs_version.ml
 bin/whole_compiler.ml : common/js_config.mli
+bin/whole_compiler.ml : common/ml_binary.mli
 bin/whole_compiler.ml : core/config_util.mli
 bin/whole_compiler.ml : core/js_analyzer.mli
 bin/whole_compiler.ml : core/js_ast_util.mli

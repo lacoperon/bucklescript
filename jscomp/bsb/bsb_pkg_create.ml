@@ -1,4 +1,5 @@
-(* Copyright (C) 2015-2016 Bloomberg Finance L.P.
+
+(* Copyright (C) 2017- Authors of BuckleScript
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -22,25 +23,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. *)
 
+let package_sep = "-"
 
-val read_ast : 'a Ml_binary.kind -> string -> 'a 
+open Ast_helper
+let loc = Location.none
+(* module pkg_name = pkg_name-cunit *)
+let make_structure_item pkg_name cunit : Parsetree.structure_item =
+  Str.module_ 
+    (Mb.mk {txt = cunit; loc }
+       (Mod.ident {txt = Lident (pkg_name ^ package_sep ^ cunit) ; loc}))
 
+let make_signature_item pkg_name cunit : Parsetree.signature_item = 
+  Sig.module_
+    (Md.mk {txt = cunit; loc}
+       (Mty.alias {txt = Lident (pkg_name ^ package_sep ^ cunit); loc})
+    )        
 
+let make_structure pkg_name cunits : Parsetree.structure =     
+    cunits |> List.map (make_structure_item pkg_name)
 
-(**
-   Check out {!Depends_post_process} for set decoding
-   The [.ml] file can be recognized as an ast directly, the format
-   is
-   {
-   magic number;
-   filename;
-   ast
-   }
-   when [fname] is "-" it means the file is from an standard input or pipe.
-   An empty name would marshallized.
-
-   Use case cat - | fan -printer -impl -
-   redirect the standard input to fan
- *)
-val write_ast : fname:string -> output:string -> 'a Ml_binary.kind -> 'a -> unit
-
+let make_signature pkg_name cunits  : Parsetree.signature = 
+  cunits |> List.map (make_signature_item pkg_name)  

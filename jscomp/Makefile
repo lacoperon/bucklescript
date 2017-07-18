@@ -218,7 +218,14 @@ EXT_SRCS = ext_util\
 
 EXT_CMXS=$(addprefix ext/, $(addsuffix .cmx, $(EXT_SRCS)))
 EXT_CMOS=$(addprefix ext/, $(addsuffix .cmo, $(EXT_SRCS)))
-COMMON_SRCS= bs_version js_config  ext_log bs_loc  bs_warnings  lam_methname  binary_cache
+COMMON_SRCS= bs_version \
+	js_config  \
+	ext_log \
+	bs_loc  \
+	bs_warnings  \
+	lam_methname  \
+	binary_cache \
+	ml_binary
 COMMON_CMXS= $(addprefix common/, $(addsuffix .cmx, $(COMMON_SRCS)))
 SYNTAX_SRCS= \
 	bs_syntaxerr\
@@ -296,6 +303,7 @@ BSB_SRCS= bsb_config \
 	bsb_dir_index\
 	bsb_log\
 	bsb_pkg \
+	bsb_pkg_create\
 	bsb_build_schemas \
 	bsb_build_util \
 	bsb_helper_linker\

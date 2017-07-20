@@ -1,7 +1,13 @@
 language: node_js
+
+git:
+  submodules: false
+# we track .tar.gz now 
+
 env:
   - BS_TRAVIS_CI=1
-# install: npm install -g .
+
+after_install: npm link
   
 node_js:
   - 6

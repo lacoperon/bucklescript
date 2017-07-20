@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"fmt"
+	"sync"
 )
 
 func checkError(err error){
@@ -34,7 +35,8 @@ func testTheme(theme string){
 }
 
 
-func runMoCha(){
+func runMoCha(wg *sync.WaitGroup ){
+	defer wg.Done()
 	fmt.Println("Running Mocha tests")
 	cmd:=exec.Command("mocha", "./jscomp/test/**/*test.js")
 	output,err:=cmd.CombinedOutput()
@@ -43,7 +45,20 @@ func runMoCha(){
 	fmt.Println("Running mocha finished")
 	
 }
+
+func installGlobal(wg *sync.WaitGroup){
+	defer wg.Done()
+	cmd:=exec.Command("npm", "install","-g",".")
+	output, err := cmd.CombinedOutput()
+	fmt.Printf(string(output))
+	checkError(err)
+}
+
 func main(){
-	runMoCha()
-	exec.Command("npm", "link")
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go runMoCha(&wg)
+	go installGlobal(&wg)
+	wg.Wait()
+
 }

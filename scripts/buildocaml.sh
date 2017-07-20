@@ -13,4 +13,4 @@ mkdir -p $OCAML
 tar -zxvf ./ocaml.tar.gz -C $OCAML > /dev/null  2>&1
 cd $OCAML 
 echo $PWD
-./configure -prefix "$(dirname $(dirname "$PWD"))"  -no-ocamldoc -no-ocamlbuild -no-shared-libs -no-curses -no-graph -no-pthread -no-debugger  && make -j9 world.opt && make install  && cd ..
+./configure -prefix `pwd`  -no-ocamldoc -no-ocamlbuild -no-shared-libs -no-curses -no-graph -no-pthread -no-debugger  && make -j9 world.opt && make install  && cd ..

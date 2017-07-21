@@ -51,6 +51,7 @@ function test_ninja_compatible(binary_path) {
             stdio: ['pipe', 'pipe', 'ignore'] // execSync outputs to stdout even if we catch the error. Silent it here
         }).trim();
     } catch (e) {
+        console.log('ninja not compatible?', e)
         return false;
     }
     return version === vendor_ninja_version;

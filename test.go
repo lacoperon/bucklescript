@@ -69,4 +69,14 @@ func main() {
 	go runMoCha(&wg)
 	go installGlobal(&wg)
 	wg.Wait()
+
+	for _, theme := range []string{"basic", "basic-reason", "generator", "minimal"} {
+		fmt.Println("Test theme", theme)
+		wg.Add(1)
+		go (func(theme string) {
+			defer wg.Done()
+			testTheme(theme)
+		})(theme)
+	}
+	wg.Wait()
 }
